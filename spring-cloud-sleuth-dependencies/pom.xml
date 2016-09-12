@@ -17,6 +17,7 @@
 		<spring-cloud-netflix.version>1.1.7.BUILD-SNAPSHOT</spring-cloud-netflix.version>
 		<aspectj.version>1.8.4</aspectj.version>
 		<zipkin.version>1.1.5</zipkin.version>
+		<reactivestreams.version>1.0.0</reactivestreams.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -91,6 +92,11 @@
 				<groupId>io.zipkin.java</groupId>
 				<artifactId>zipkin-junit</artifactId>
 				<version>${zipkin.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.reactivestreams</groupId>
+				<artifactId>reactive-streams</artifactId>
+				<version>${reactivestreams.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
