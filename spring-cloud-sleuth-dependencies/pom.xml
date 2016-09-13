@@ -18,6 +18,7 @@
 		<aspectj.version>1.8.4</aspectj.version>
 		<zipkin.version>1.1.5</zipkin.version>
 		<reactivestreams.version>1.0.0</reactivestreams.version>
+		<reactor.version>3.0.2.RELEASE</reactor.version>
 	</properties>
 	<dependencyManagement>
 		<dependencies>
@@ -40,7 +41,17 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-sleuth-reactor</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-sleuth-stream</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-sleuth-test</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
@@ -97,6 +108,11 @@
 				<groupId>org.reactivestreams</groupId>
 				<artifactId>reactive-streams</artifactId>
 				<version>${reactivestreams.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.projectreactor</groupId>
+				<artifactId>reactor-core</artifactId>
+				<version>${reactor.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
