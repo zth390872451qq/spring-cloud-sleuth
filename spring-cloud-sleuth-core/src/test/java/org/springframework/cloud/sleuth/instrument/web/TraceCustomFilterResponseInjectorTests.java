@@ -16,6 +16,17 @@
 
 package org.springframework.cloud.sleuth.instrument.web;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,16 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.GenericFilterBean;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import io.opentracing.SpanContext;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -116,7 +118,8 @@ public class TraceCustomFilterResponseInjectorTests {
 	static class CustomHttpServletResponseSpanInjector extends ZipkinHttpSpanInjector {
 
 		@Override
-		public void inject(Span span, SpanTextMap carrier) {
+		public void inject(SpanContext spanContext, SpanTextMap carrier) {
+			Span span = (Span) spanContext;
 			super.inject(span, carrier);
 			carrier.put(Span.TRACE_ID_NAME, span.traceIdString());
 			carrier.put(Span.SPAN_ID_NAME, Span.idToHex(span.getSpanId()));

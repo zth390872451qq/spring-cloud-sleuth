@@ -49,6 +49,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import io.opentracing.SpanContext;
+
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.springframework.cloud.sleuth.assertions.SleuthAssertions.then;
@@ -153,7 +155,8 @@ public class TraceFilterCustomExtractorTests {
 	static class CustomHttpSpanInjector implements HttpSpanInjector {
 
 		@Override
-		public void inject(Span span, SpanTextMap carrier) {
+		public void inject(SpanContext spanContext, SpanTextMap carrier) {
+			Span span = (Span) spanContext;
 			carrier.put("correlationId", span.traceIdString());
 			carrier.put("mySpanId", Span.idToHex(span.getSpanId()));
 		}

@@ -9,6 +9,8 @@ import org.springframework.cloud.sleuth.TraceKeys;
 import org.springframework.cloud.sleuth.util.TextMapUtil;
 import org.springframework.util.StringUtils;
 
+import io.opentracing.SpanContext;
+
 /**
  * Default implementation for messaging
  *
@@ -24,16 +26,16 @@ public class HeaderBasedMessagingInjector implements MessagingSpanTextMapInjecto
 	}
 
 	@Override
-	public void inject(Span span, SpanTextMap carrier) {
+	public void inject(SpanContext spanContext, SpanTextMap carrier) {
 		Map<String, String> map = TextMapUtil.asMap(carrier);
-		if (span == null) {
+		if (spanContext == null) {
 			if (!isSampled(map, TraceMessageHeaders.SAMPLED_NAME)) {
 				carrier.put(TraceMessageHeaders.SAMPLED_NAME, Span.SPAN_NOT_SAMPLED);
 				return;
 			}
 			return;
 		}
-		addHeaders(span, carrier);
+		addHeaders((Span) spanContext, carrier);
 	}
 
 	private boolean isSampled(Map<String, String> initialMessage, String sampledHeaderName) {

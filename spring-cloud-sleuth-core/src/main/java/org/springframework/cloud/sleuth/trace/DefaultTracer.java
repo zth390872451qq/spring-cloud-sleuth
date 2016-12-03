@@ -16,10 +16,17 @@
 
 package org.springframework.cloud.sleuth.trace;
 
+import java.lang.invoke.MethodHandles;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.cloud.sleuth.Sampler;
 import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.SpanExtractor;
 import org.springframework.cloud.sleuth.SpanInjector;
 import org.springframework.cloud.sleuth.SpanNamer;
 import org.springframework.cloud.sleuth.SpanReporter;
@@ -40,6 +47,11 @@ import io.opentracing.propagation.Format;
  * @since 1.0.0
  */
 public class DefaultTracer implements Tracer {
+
+	private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
+	private final Map<String, SpanInjector> injectors = new ConcurrentHashMap<>();
+	private final Map<String, SpanExtractor> extractors = new ConcurrentHashMap<>();
 
 	private final Sampler defaultSampler;
 
@@ -286,23 +298,69 @@ public class DefaultTracer implements Tracer {
 		return Span.builder().name(operationName);
 	}
 
+	/**
+	 * Shouldn't be used cause we have a Dependency Injection mechanism
+	 */
 	@Override
+	@SuppressWarnings("unchecked")
 	public <C> void inject(SpanContext spanContext, Format<C> format, C carrier) {
 		// TODO: Fix this
 		if (this.applicationContext != null) {
-			this.applicationContext.getBean(SpanInjector.class).inject(spanContext, carrier);
+			Map<String, SpanInjector> injectors = injectors();
+			for (SpanInjector injector : injectors.values()) {
+				//TODO: This is an aberration of Dependency Injection
+				try {
+					injector.inject(spanContext, carrier);
+				} catch (Exception e) {
+					if (log.isDebugEnabled()) {
+						log.debug("Exception occurred while trying to invoke the injector [" + injector + "] for carrier [" + carrier + "]");
+					}
+				}
+			}
 		}
 		throw new UnsupportedOperationException("You've constructed the tracer without support for this method. "
 				+ "You have to inject ApplicationContext to make this work");
 	}
 
+	private Map<String, SpanInjector> injectors() {
+		synchronized (this.injectors) {
+			if (this.injectors.isEmpty()) {
+				this.injectors.putAll(this.applicationContext.getBeansOfType(SpanInjector.class));
+			}
+			return this.injectors;
+		}
+	}
+
+	/**
+	 * Shouldn't be used cause we have a Dependency Injection mechanism
+	 */
 	@Override
+	@SuppressWarnings("unchecked")
 	public <C> SpanContext extract(Format<C> format, C carrier) {
 		// TODO: Fix this
 		if (this.applicationContext != null) {
-
+			Map<String, SpanExtractor> extractors = extractors();
+			for (SpanExtractor extractor : extractors.values()) {
+				//TODO: This is an aberration of Dependency Injection
+				try {
+					extractor.joinTrace(carrier);
+				} catch (Exception e) {
+					if (log.isDebugEnabled()) {
+						log.debug("Exception occurred while trying to invoke the extractor [" + extractor + "] for carrier [" + carrier + "]");
+					}
+				}
+			}
 		}
 		throw new UnsupportedOperationException("You've constructed the tracer without support for this method. "
 				+ "You have to inject ApplicationContext to make this work");
+	}
+
+	private Map<String, SpanExtractor> extractors() {
+		synchronized (this.extractors) {
+			if (this.extractors.isEmpty()) {
+				this.extractors.putAll(this.applicationContext.getBeansOfType(SpanExtractor.class));
+			}
+			return this.extractors;
+		}
 	}
 }

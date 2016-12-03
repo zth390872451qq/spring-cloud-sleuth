@@ -26,6 +26,8 @@ import org.springframework.cloud.sleuth.SpanInjector;
 import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.Tracer;
 
+import io.opentracing.SpanContext;
+
 /**
  * Abstraction over customization of Ribbon Requests. All clients will inject the span
  * into their respective context. The only difference is how those contexts set the headers.
@@ -61,7 +63,8 @@ abstract class SpanInjectingRibbonRequestCustomizer<T> implements RibbonRequestC
 	protected abstract SpanTextMap toSpanTextMap(T context);
 
 	@Override
-	public void inject(Span span, SpanTextMap carrier) {
+	public void inject(SpanContext spanContext, SpanTextMap carrier) {
+		Span span = (Span) spanContext;
 		if (span == null) {
 			carrier.put(Span.SAMPLED_NAME, Span.SPAN_NOT_SAMPLED);
 			return;

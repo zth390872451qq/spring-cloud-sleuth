@@ -16,6 +16,8 @@
 
 package org.springframework.cloud.sleuth;
 
+import io.opentracing.SpanContext;
+
 /**
  * Adopted from <a href=
  * "https://github.com/opentracing/opentracing-java/blob/master/opentracing/src/main/java/opentracing/Tracer.java">
@@ -39,5 +41,5 @@ public interface SpanInjector<T> {
 	 * Attempting to inject to a carrier that has been registered/configured to this
 	 * Tracer will result in a IllegalStateException.
 	 */
-	void inject(Span span, T carrier);
+	void inject(SpanContext spanContext, T carrier);
 }

@@ -6,6 +6,8 @@ import org.springframework.cloud.sleuth.Span;
 import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.util.StringUtils;
 
+import io.opentracing.SpanContext;
+
 /**
  * Default implementation of {@link HttpSpanInjector}, compatible with Zipkin propagation.
  *
@@ -17,7 +19,8 @@ public class ZipkinHttpSpanInjector implements HttpSpanInjector {
 	private static final String HEADER_DELIMITER = "-";
 
 	@Override
-	public void inject(Span span, SpanTextMap carrier) {
+	public void inject(SpanContext spanContext, SpanTextMap carrier) {
+		Span span = (Span) spanContext;
 		setHeader(carrier, Span.TRACE_ID_NAME, span.traceIdString());
 		setIdHeader(carrier, Span.SPAN_ID_NAME, span.getSpanId());
 		setHeader(carrier, Span.SAMPLED_NAME, span.isExportable() ? Span.SPAN_SAMPLED : Span.SPAN_NOT_SAMPLED);

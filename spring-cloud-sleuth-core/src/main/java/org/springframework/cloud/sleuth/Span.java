@@ -914,7 +914,7 @@ public class Span implements SpanContext, io.opentracing.Span {
 			this.referredTo = referredTo;
 		}
 
-		public final Object getReferenceType() { return referenceType; }
-		public final SpanContext getReferredTo() { return referredTo; }
+		public final Object getReferenceType() { return this.referenceType; }
+		public final SpanContext getReferredTo() { return this.referredTo; }
 	}
 }
