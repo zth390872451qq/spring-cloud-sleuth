@@ -27,13 +27,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
+import io.opentracing.References;
+import io.opentracing.SpanContext;
+import io.opentracing.Tracer;
 
 /**
  * Class for gathering and reporting statistics about a block of execution.
@@ -73,7 +78,7 @@ import org.springframework.util.StringUtils;
  */
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-public class Span implements SpanContext {
+public class Span implements SpanContext, io.opentracing.Span {
 
 	public static final String SAMPLED_NAME = "X-B3-Sampled";
 	public static final String PROCESS_ID_NAME = "X-Process-Id";
@@ -150,6 +155,9 @@ public class Span implements SpanContext {
 	private final Span savedSpan;
 	@JsonIgnore
 	private final Map<String,String> baggage;
+	@JsonIgnore
+	private List<Reference> references = new ArrayList<>();
+
 
 	// Null means we don't know the start tick, so fallback to time
 	@JsonIgnore
@@ -183,6 +191,7 @@ public class Span implements SpanContext {
 		this.durationMicros = current.durationMicros;
 		this.baggage = current.baggage;
 		this.savedSpan = savedSpan;
+		this.references = current.references;
 	}
 
 	/**
@@ -242,6 +251,7 @@ public class Span implements SpanContext {
 		this.logs.addAll(builder.logs);
 		this.baggage = new ConcurrentHashMap<>();
 		this.baggage.putAll(builder.baggage);
+		this.references.addAll(builder.references);
 	}
 
 	public static SpanBuilder builder() {
@@ -337,6 +347,60 @@ public class Span implements SpanContext {
 		this.logs.add(new Log(System.currentTimeMillis(), event));
 	}
 
+	@Override public SpanContext context() {
+		return this;
+	}
+
+	@Override public void finish() {
+		stop();
+	}
+
+	@Override public void finish(long finishMicros) {
+		// TODO: Not sure if best idea
+		this.end = TimeUnit.MICROSECONDS.toMillis(finishMicros);
+		stop();
+	}
+
+	@Override public void close() {
+		finish();
+	}
+
+	@Override public io.opentracing.Span setTag(String key, String value) {
+		tag(key, value);
+		return this;
+	}
+
+	@Override public io.opentracing.Span setTag(String key, boolean value) {
+		tag(key, String.valueOf(value));
+		return this;
+	}
+
+	@Override public io.opentracing.Span setTag(String key, Number value) {
+		tag(key, String.valueOf(value));
+		return this;
+	}
+
+	@Override public io.opentracing.Span log(Map<String, ?> fields) {
+		// TODO: How to support this map?
+		throw new UnsupportedOperationException("We don't support payload");
+	}
+
+	@Override
+	public io.opentracing.Span log(long timestampMicroseconds, Map<String, ?> fields) {
+		// TODO: How to support this map?
+		throw new UnsupportedOperationException("We don't support payload");
+	}
+
+	@Override public io.opentracing.Span log(String event) {
+		this.logEvent(event);
+		return this;
+	}
+
+	@Override public io.opentracing.Span log(long timestampMicroseconds, String event) {
+		this.logs().add(new Log(TimeUnit.MICROSECONDS.toMillis(timestampMicroseconds), event));
+		return this;
+	}
+
 	/**
 	 * Sets a baggage item in the Span (and its SpanContext) as a key/value pair.
 	 *
@@ -360,6 +424,23 @@ public class Span implements SpanContext {
 	 */
 	public String getBaggageItem(String key) {
 		return this.baggage.get(key);
+	}
+
+	@Override public io.opentracing.Span setOperationName(String operationName) {
+		return new SpanBuilder(this).name(operationName).build();
+	}
+
+	@Override public io.opentracing.Span log(String eventName, Object payload) {
+		// TODO: How to support payload?
+		this.logEvent(eventName);
+		return this;
+	}
+
+	@Override public io.opentracing.Span log(long timestampMicroseconds, String eventName,
+			Object payload) {
+		// TODO: How to support payload?
+		this.logs().add(new Log(TimeUnit.MICROSECONDS.toMillis(timestampMicroseconds), eventName));
+		return this;
 	}
 
 	@Override
@@ -626,23 +707,43 @@ public class Span implements SpanContext {
 		return false;
 	}
 
-	public static class SpanBuilder {
+	public static class SpanBuilder implements Tracer.SpanBuilder {
 		private long begin;
 		private long end;
 		private String name;
 		private long traceIdHigh;
 		private long traceId;
-		private ArrayList<Long> parents = new ArrayList<>();
+		private List<Long> parents = new ArrayList<>();
 		private long spanId;
 		private boolean remote;
 		private boolean exportable = true;
 		private String processId;
 		private Span savedSpan;
-		private List<Log> logs = new ArrayList<>();
+		private Collection<Log> logs = new ArrayList<>();
 		private Map<String, String> tags = new LinkedHashMap<>();
 		private Map<String, String> baggage = new LinkedHashMap<>();
+		private List<Reference> references = new ArrayList<>();
+
 
 		SpanBuilder() {
+		}
+
+		SpanBuilder(Span span) {
+			this.begin = span.begin;
+			this.end = span.end;
+			this.name = span.name;
+			this.traceIdHigh = span.traceIdHigh;
+			this.traceId = span.traceId;
+			this.parents = span.parents;
+			this.spanId = span.spanId;
+			this.remote = span.remote;
+			this.exportable = span.exportable;
+			this.processId = span.processId;
+			this.savedSpan = span.savedSpan;
+			this.logs = span.logs;
+			this.tags = span.tags;
+			this.baggage = span.baggage;
+			this.references = span.references;
 		}
 
 		/**
@@ -742,6 +843,11 @@ public class Span implements SpanContext {
 			return this;
 		}
 
+		public Span.SpanBuilder reference(Reference reference) {
+			this.references.add(reference);
+			return this;
+		}
+
 		public Span build() {
 			return new Span(this);
 		}
@@ -750,5 +856,65 @@ public class Span implements SpanContext {
 		public String toString() {
 			return new Span(this).toString();
 		}
+
+		@Override public Tracer.SpanBuilder asChildOf(SpanContext parent) {
+			withBaggageFrom(parent);
+			return this.addReference(References.CHILD_OF, parent);
+		}
+
+		@Override public Tracer.SpanBuilder asChildOf(io.opentracing.Span parent) {
+			withBaggageFrom(parent.context());
+			return this.addReference(References.CHILD_OF, parent.context());
+		}
+
+		private void withBaggageFrom(SpanContext from) {
+			for (Map.Entry<String, String> baggageItem : from.baggageItems()) {
+				this.baggage(baggageItem.getKey(), baggageItem.getValue());
+			}
+		}
+
+		@Override public Tracer.SpanBuilder addReference(String referenceType,
+				SpanContext referencedContext) {
+			reference(new Reference(referenceType, referencedContext));
+			return this;
+		}
+
+		@Override public Tracer.SpanBuilder withTag(String key, String value) {
+			return tag(key, value);
+		}
+
+		@Override public Tracer.SpanBuilder withTag(String key, boolean value) {
+			return tag(key, String.valueOf(value));
+		}
+
+		@Override public Tracer.SpanBuilder withTag(String key, Number value) {
+			return tag(key, String.valueOf(value));
+		}
+
+		@Override public Tracer.SpanBuilder withStartTimestamp(long microseconds) {
+			// TODO: dunno if this is a good idea
+			return begin(TimeUnit.MICROSECONDS.toMillis(microseconds));
+		}
+
+		@Override public io.opentracing.Span start() {
+			return build();
+		}
+
+		@Override public Iterable<Map.Entry<String, String>> baggageItems() {
+			return this.baggage.entrySet();
+		}
+	}
+
+	public static final class Reference {
+		private final String referenceType;
+		private final SpanContext referredTo;
+
+		Reference(String type, SpanContext referredTo) {
+			this.referenceType = type;
+			this.referredTo = referredTo;
+		}
+
+		public final Object getReferenceType() { return referenceType; }
+		public final SpanContext getReferredTo() { return referredTo; }
 	}
 }

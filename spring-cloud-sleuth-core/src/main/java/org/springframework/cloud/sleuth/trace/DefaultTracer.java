@@ -20,6 +20,7 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import org.springframework.cloud.sleuth.Sampler;
 import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.SpanInjector;
 import org.springframework.cloud.sleuth.SpanNamer;
 import org.springframework.cloud.sleuth.SpanReporter;
 import org.springframework.cloud.sleuth.TraceCallable;
@@ -27,6 +28,10 @@ import org.springframework.cloud.sleuth.TraceRunnable;
 import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.cloud.sleuth.log.SpanLogger;
 import org.springframework.cloud.sleuth.util.ExceptionUtils;
+import org.springframework.context.ApplicationContext;
+
+import io.opentracing.SpanContext;
+import io.opentracing.propagation.Format;
 
 /**
  * Default implementation of {@link Tracer}
@@ -46,13 +51,17 @@ public class DefaultTracer implements Tracer {
 
 	private final SpanReporter spanReporter;
 
+	private final ApplicationContext applicationContext;
+
 	private final boolean traceId128;
 
+	@Deprecated
 	public DefaultTracer(Sampler defaultSampler, Random random, SpanNamer spanNamer,
 			SpanLogger spanLogger, SpanReporter spanReporter) {
 		this(defaultSampler, random, spanNamer, spanLogger, spanReporter, false);
 	}
 
+	@Deprecated
 	public DefaultTracer(Sampler defaultSampler, Random random, SpanNamer spanNamer,
 				SpanLogger spanLogger, SpanReporter spanReporter, boolean traceId128) {
 		this.defaultSampler = defaultSampler;
@@ -61,6 +70,23 @@ public class DefaultTracer implements Tracer {
 		this.spanLogger = spanLogger;
 		this.spanReporter = spanReporter;
 		this.traceId128 = traceId128;
+		this.applicationContext = null;
+	}
+
+	public DefaultTracer(Sampler defaultSampler, Random random, SpanNamer spanNamer,
+			SpanLogger spanLogger, SpanReporter spanReporter, ApplicationContext applicationContext) {
+		this(defaultSampler, random, spanNamer, spanLogger, spanReporter, false, applicationContext);
+	}
+
+	public DefaultTracer(Sampler defaultSampler, Random random, SpanNamer spanNamer,
+				SpanLogger spanLogger, SpanReporter spanReporter, boolean traceId128, ApplicationContext applicationContext) {
+		this.defaultSampler = defaultSampler;
+		this.random = random;
+		this.spanNamer = spanNamer;
+		this.spanLogger = spanLogger;
+		this.spanReporter = spanReporter;
+		this.traceId128 = traceId128;
+		this.applicationContext = applicationContext;
 	}
 
 	@Override
@@ -253,5 +279,30 @@ public class DefaultTracer implements Tracer {
 			return new TraceRunnable(this, this.spanNamer, runnable);
 		}
 		return runnable;
+	}
+
+	@Override
+	public SpanBuilder buildSpan(String operationName) {
+		return Span.builder().name(operationName);
+	}
+
+	@Override
+	public <C> void inject(SpanContext spanContext, Format<C> format, C carrier) {
+		// TODO: Fix this
+		if (this.applicationContext != null) {
+			this.applicationContext.getBean(SpanInjector.class).inject(spanContext, carrier);
+		}
+		throw new UnsupportedOperationException("You've constructed the tracer without support for this method. "
+				+ "You have to inject ApplicationContext to make this work");
+	}
+
+	@Override
+	public <C> SpanContext extract(Format<C> format, C carrier) {
+		// TODO: Fix this
+		if (this.applicationContext != null) {
+
+		}
+		throw new UnsupportedOperationException("You've constructed the tracer without support for this method. "
+				+ "You have to inject ApplicationContext to make this work");
 	}
 }

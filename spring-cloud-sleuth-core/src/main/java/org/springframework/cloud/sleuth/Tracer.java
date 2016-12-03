@@ -52,7 +52,7 @@ import java.util.concurrent.Callable;
  *
  * @since 1.0.0
  */
-public interface Tracer extends SpanAccessor {
+public interface Tracer extends SpanAccessor, io.opentracing.Tracer {
 
 	/**
 	 * Creates a new Span.

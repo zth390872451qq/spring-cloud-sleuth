@@ -3,6 +3,8 @@ package org.springframework.cloud.sleuth;
 import java.util.Iterator;
 import java.util.Map;
 
+import io.opentracing.propagation.TextMap;
+
 /**
  * Adopted from: https://github.com/opentracing/opentracing-java/blob/0.16.0/opentracing-api/src/main/java/io/opentracing/propagation/TextMap.java
  *
@@ -12,7 +14,7 @@ import java.util.Map;
  * @author Marcin Grzejszczak
  * @since 1.2.0
  */
-public interface SpanTextMap extends Iterable<Map.Entry<String, String>> {
+public interface SpanTextMap extends TextMap {
 	/**
 	 * Gets an iterator over arbitrary key:value pairs from the TextMapReader.
 	 *
