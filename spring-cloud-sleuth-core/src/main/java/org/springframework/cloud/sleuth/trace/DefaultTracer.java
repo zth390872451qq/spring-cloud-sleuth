@@ -67,12 +67,20 @@ public class DefaultTracer implements Tracer {
 
 	private final boolean traceId128;
 
+	/**
+	 * Non-opentracing compatible. Application Context is needed for Open Tracing
+	 * to work properly.
+	 */
 	@Deprecated
 	public DefaultTracer(Sampler defaultSampler, Random random, SpanNamer spanNamer,
 			SpanLogger spanLogger, SpanReporter spanReporter) {
 		this(defaultSampler, random, spanNamer, spanLogger, spanReporter, false);
 	}
 
+	/**
+	 * Non-opentracing compatible. Application Context is needed for Open Tracing
+	 * to work properly.
+	 */
 	@Deprecated
 	public DefaultTracer(Sampler defaultSampler, Random random, SpanNamer spanNamer,
 				SpanLogger spanLogger, SpanReporter spanReporter, boolean traceId128) {
@@ -115,7 +123,7 @@ public class DefaultTracer implements Tracer {
 	}
 
 	@Override
-	public Span createSpan(Span span) {
+	public Span createFromSpan(Span span) {
 		if (isTracing()) {
 			span = createChild(getCurrentSpan(), span);
 		}

@@ -143,7 +143,8 @@ public class Span implements SpanContext, io.opentracing.Span {
 
 	private final long begin;
 	private long end = 0;
-	private final String name;
+	// TODO: If it's supposed to be aligned with OpenTracing - name can't be immutable
+	private String name;
 	private final long traceIdHigh;
 	private final long traceId;
 	private List<Long> parents = new ArrayList<>();
@@ -442,7 +443,8 @@ public class Span implements SpanContext, io.opentracing.Span {
 	}
 
 	@Override public io.opentracing.Span setOperationName(String operationName) {
-		return new SpanBuilder(this).name(operationName).build();
+		this.name = operationName;
+		return this;
 	}
 
 	@Override public io.opentracing.Span log(String eventName, Object payload) {
@@ -921,7 +923,7 @@ public class Span implements SpanContext, io.opentracing.Span {
 			org.springframework.cloud.sleuth.Tracer tracer = this.applicationContext
 					.getBean(org.springframework.cloud.sleuth.Tracer.class);
 			Span span = build();
-			return tracer.createSpan(span);
+			return tracer.createFromSpan(span);
 		}
 
 		@Override public Iterable<Map.Entry<String, String>> baggageItems() {

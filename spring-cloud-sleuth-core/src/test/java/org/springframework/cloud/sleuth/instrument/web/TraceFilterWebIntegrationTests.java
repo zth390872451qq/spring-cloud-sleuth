@@ -99,7 +99,6 @@ public class TraceFilterWebIntegrationTests {
 			return new AlwaysSampler();
 		}
 
-
 		@Bean RestTemplate restTemplate() {
 			RestTemplate restTemplate = new RestTemplate();
 			restTemplate.setErrorHandler(new DefaultResponseErrorHandler() {

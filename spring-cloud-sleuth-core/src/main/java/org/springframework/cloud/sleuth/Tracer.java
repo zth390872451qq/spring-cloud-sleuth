@@ -36,9 +36,9 @@ import java.util.concurrent.Callable;
  *
  * Most crucial methods in terms of span lifecycle are:
  * <ul>
- * <li>The {@linkplain Tracer#createSpan(String) createSpan} method in this class
+ * <li>The {@linkplain Tracer#createSpan(String) createFromSpan} method in this class
  * starts a new span.</li>
- * <li>The {@linkplain Tracer#createSpan(String, Span) createSpan} method creates a new span
+ * <li>The {@linkplain Tracer#createSpan(String, Span) createFromSpan} method creates a new span
  * which has this thread's currentSpan as one of its parents</li>
  * <li>The {@linkplain Tracer#continueSpan(Span) continueSpan} method creates a
  * new instance of span that logically is a continuation of the provided span.</li>
@@ -74,7 +74,7 @@ public interface Tracer extends SpanAccessor, io.opentracing.Tracer {
 	 *
 	 * @param span the span which will be placed in the current context
 	 */
-	Span createSpan(Span span);
+	Span createFromSpan(Span span);
 
 	/**
 	 * Creates a new Span with a specific parent. The parent might be in another
