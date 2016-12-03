@@ -20,20 +20,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 import org.springframework.util.StringUtils;
 
+import io.opentracing.propagation.TextMap;
+
 /**
- * A {@link SpanTextMap} abstraction over {@link MessageBuilder}
+ * A {@link TextMap} abstraction over {@link MessageBuilder}
  *
  * @author Marcin Grzejszczak
  * @since 1.2.0
  */
-class MessagingTextMap implements SpanTextMap {
+class MessagingTextMap implements TextMap {
 
 	private final MessageBuilder delegate;
 

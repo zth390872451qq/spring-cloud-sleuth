@@ -22,8 +22,9 @@ import java.util.Map;
 
 import org.apache.http.Header;
 import org.apache.http.client.methods.RequestBuilder;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.Tracer;
+
+import io.opentracing.propagation.TextMap;
 
 /**
  * Customization of a Ribbon request for Apache HttpClient
@@ -43,8 +44,8 @@ class ApacheHttpClientRibbonRequestCustomizer extends SpanInjectingRibbonRequest
 	}
 
 	@Override
-	protected SpanTextMap toSpanTextMap(final RequestBuilder context) {
-		return new SpanTextMap() {
+	protected TextMap toSpanTextMap(final RequestBuilder context) {
+		return new TextMap() {
 			@Override public Iterator<Map.Entry<String, String>> iterator() {
 				Map<String, String> map = new HashMap<>();
 				for (Header header : context.build().getAllHeaders()) {

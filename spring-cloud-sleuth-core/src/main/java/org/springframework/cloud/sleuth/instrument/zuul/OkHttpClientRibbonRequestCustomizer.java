@@ -21,9 +21,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.Tracer;
 
+import io.opentracing.propagation.TextMap;
 import okhttp3.Request;
 
 /**
@@ -44,8 +44,8 @@ class OkHttpClientRibbonRequestCustomizer extends SpanInjectingRibbonRequestCust
 	}
 
 	@Override
-	protected SpanTextMap toSpanTextMap(final Request.Builder context) {
-		return new SpanTextMap() {
+	protected TextMap toSpanTextMap(final Request.Builder context) {
+		return new TextMap() {
 			@Override public Iterator<Map.Entry<String, String>> iterator() {
 				Map<String, String> map = new HashMap<>();
 				for (Map.Entry<String, List<String>> entry : context.build().headers().toMultimap().entrySet()) {

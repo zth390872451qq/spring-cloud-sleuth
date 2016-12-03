@@ -357,6 +357,9 @@ public class DefaultTracer implements Tracer {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <C> void inject(SpanContext spanContext, Format<C> format, C carrier) {
+		if (format != Format.Builtin.TEXT_MAP) {
+			throw new UnsupportedOperationException("Only text map is supported");
+		}
 		if (this.applicationContext != null) {
 			Map<String, SpanInjector> injectors = injectors();
 			for (SpanInjector injector : injectors.values()) {
@@ -369,9 +372,10 @@ public class DefaultTracer implements Tracer {
 					}
 				}
 			}
+		} else {
+			throw new UnsupportedOperationException("You've constructed the tracer without support for this method. "
+					+ "You have to inject ApplicationContext to make this work");
 		}
-		throw new UnsupportedOperationException("You've constructed the tracer without support for this method. "
-				+ "You have to inject ApplicationContext to make this work");
 	}
 
 	private Map<String, SpanInjector> injectors() {
@@ -387,21 +391,30 @@ public class DefaultTracer implements Tracer {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <C> SpanContext extract(Format<C> format, C carrier) {
+		if (format != Format.Builtin.TEXT_MAP) {
+			throw new UnsupportedOperationException("Only text map is supported");
+		}
 		if (this.applicationContext != null) {
 			Map<String, SpanExtractor> extractors = extractors();
 			for (SpanExtractor extractor : extractors.values()) {
 				//TODO: This is an aberration of Dependency Injection
 				try {
-					extractor.joinTrace(carrier);
+					SpanContext spanContext = extractor.joinTrace(carrier);
+					if (spanContext == null) {
+						continue;
+					}
+					return spanContext;
 				} catch (Exception e) {
 					if (log.isDebugEnabled()) {
 						log.debug("Exception occurred while trying to invoke the extractor [" + extractor + "] for carrier [" + carrier + "]");
 					}
 				}
 			}
+		} else {
+			throw new UnsupportedOperationException("You've constructed the tracer without support for this method. "
+					+ "You have to inject ApplicationContext to make this work");
 		}
-		throw new UnsupportedOperationException("You've constructed the tracer without support for this method. "
-				+ "You have to inject ApplicationContext to make this work");
+		return null;
 	}
 
 	private Map<String, SpanExtractor> extractors() {

@@ -26,18 +26,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.util.StringUtils;
 
 import feign.Request;
+import io.opentracing.propagation.TextMap;
 
 /**
- * A {@link SpanTextMap} abstraction over {@link AtomicReference<Request>}
+ * A {@link TextMap} abstraction over {@link AtomicReference<Request>}
  *
  * @author Marcin Grzejszczak
  * @since 1.2.0
  */
-class FeignRequestTextMap implements SpanTextMap {
+class FeignRequestTextMap implements TextMap {
 
 	private final AtomicReference<Request> delegate;
 

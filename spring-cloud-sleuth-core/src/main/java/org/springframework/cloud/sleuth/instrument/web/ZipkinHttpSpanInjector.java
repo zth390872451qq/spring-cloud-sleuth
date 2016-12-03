@@ -3,10 +3,10 @@ package org.springframework.cloud.sleuth.instrument.web;
 import java.util.Map;
 
 import org.springframework.cloud.sleuth.Span;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.util.StringUtils;
 
 import io.opentracing.SpanContext;
+import io.opentracing.propagation.TextMap;
 
 /**
  * Default implementation of {@link HttpSpanInjector}, compatible with Zipkin propagation.
@@ -19,7 +19,7 @@ public class ZipkinHttpSpanInjector implements HttpSpanInjector {
 	private static final String HEADER_DELIMITER = "-";
 
 	@Override
-	public void inject(SpanContext spanContext, SpanTextMap carrier) {
+	public void inject(SpanContext spanContext, TextMap carrier) {
 		Span span = (Span) spanContext;
 		setHeader(carrier, Span.TRACE_ID_NAME, span.traceIdString());
 		setIdHeader(carrier, Span.SPAN_ID_NAME, span.getSpanId());
@@ -43,13 +43,13 @@ public class ZipkinHttpSpanInjector implements HttpSpanInjector {
 		return !span.getParents().isEmpty() ? span.getParents().get(0) : null;
 	}
 
-	private void setIdHeader(SpanTextMap carrier, String name, Long value) {
+	private void setIdHeader(TextMap carrier, String name, Long value) {
 		if (value != null) {
 			setHeader(carrier, name, Span.idToHex(value));
 		}
 	}
 
-	private void setHeader(SpanTextMap carrier, String name, String value) {
+	private void setHeader(TextMap carrier, String name, String value) {
 		if (StringUtils.hasText(value)) {
 			carrier.put(name, value);
 		}

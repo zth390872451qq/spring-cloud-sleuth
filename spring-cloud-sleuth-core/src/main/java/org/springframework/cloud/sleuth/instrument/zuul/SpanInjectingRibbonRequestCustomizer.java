@@ -23,10 +23,10 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.cloud.netflix.ribbon.support.RibbonRequestCustomizer;
 import org.springframework.cloud.sleuth.Span;
 import org.springframework.cloud.sleuth.SpanInjector;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.Tracer;
 
 import io.opentracing.SpanContext;
+import io.opentracing.propagation.TextMap;
 
 /**
  * Abstraction over customization of Ribbon Requests. All clients will inject the span
@@ -40,7 +40,7 @@ import io.opentracing.SpanContext;
  * @since 1.1.0
  */
 abstract class SpanInjectingRibbonRequestCustomizer<T> implements RibbonRequestCustomizer<T>,
-		SpanInjector<SpanTextMap> {
+		SpanInjector<TextMap> {
 
 	private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -60,10 +60,10 @@ abstract class SpanInjectingRibbonRequestCustomizer<T> implements RibbonRequestC
 		}
 	}
 	
-	protected abstract SpanTextMap toSpanTextMap(T context);
+	protected abstract TextMap toSpanTextMap(T context);
 
 	@Override
-	public void inject(SpanContext spanContext, SpanTextMap carrier) {
+	public void inject(SpanContext spanContext, TextMap carrier) {
 		Span span = (Span) spanContext;
 		if (span == null) {
 			carrier.put(Span.SAMPLED_NAME, Span.SPAN_NOT_SAMPLED);

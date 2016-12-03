@@ -5,7 +5,6 @@ import java.lang.invoke.MethodHandles;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.cloud.sleuth.Span;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.TraceKeys;
 import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.integration.channel.AbstractMessageChannel;
@@ -14,6 +13,8 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.ChannelInterceptorAdapter;
 import org.springframework.messaging.support.ExecutorChannelInterceptor;
 import org.springframework.util.ClassUtils;
+
+import io.opentracing.propagation.TextMap;
 
 /**
  * Abstraction over classes related to channel intercepting
@@ -65,7 +66,7 @@ abstract class AbstractTraceChannelInterceptor extends ChannelInterceptorAdapter
 	 * Returns a span given the message and a channel. Returns {@code null} if ids are
 	 * missing.
 	 */
-	protected Span buildSpan(SpanTextMap carrier) {
+	protected Span buildSpan(TextMap carrier) {
 		try {
 			return this.spanExtractor.joinTrace(carrier);
 		} catch (Exception e) {

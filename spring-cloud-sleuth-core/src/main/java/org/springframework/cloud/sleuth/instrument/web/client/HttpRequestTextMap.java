@@ -22,17 +22,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.http.HttpRequest;
 import org.springframework.util.StringUtils;
 
+import io.opentracing.propagation.TextMap;
+
 /**
- * A {@link SpanTextMap} abstraction over {@link HttpRequest}
+ * A {@link TextMap} abstraction over {@link HttpRequest}
  *
  * @author Marcin Grzejszczak
  * @since 1.2.0
  */
-class HttpRequestTextMap implements SpanTextMap {
+class HttpRequestTextMap implements TextMap {
 
 	private final HttpRequest delegate;
 

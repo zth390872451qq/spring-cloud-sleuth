@@ -6,9 +6,10 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.logging.LogFactory;
 import org.springframework.cloud.sleuth.Span;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.util.TextMapUtil;
 import org.springframework.util.StringUtils;
+
+import io.opentracing.propagation.TextMap;
 
 /**
  * Default implementation, compatible with Zipkin propagation.
@@ -31,7 +32,7 @@ public class ZipkinHttpSpanExtractor implements HttpSpanExtractor {
 	}
 
 	@Override
-	public Span joinTrace(SpanTextMap textMap) {
+	public Span joinTrace(TextMap textMap) {
 		Map<String, String> carrier = TextMapUtil.asMap(textMap);
 		if (carrier.get(Span.TRACE_ID_NAME) == null) {
 			// can't build a Span without trace id

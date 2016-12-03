@@ -4,12 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.cloud.sleuth.Span;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.TraceKeys;
 import org.springframework.cloud.sleuth.util.TextMapUtil;
 import org.springframework.util.StringUtils;
 
 import io.opentracing.SpanContext;
+import io.opentracing.propagation.TextMap;
 
 /**
  * Default implementation for messaging
@@ -26,7 +26,7 @@ public class HeaderBasedMessagingInjector implements MessagingSpanTextMapInjecto
 	}
 
 	@Override
-	public void inject(SpanContext spanContext, SpanTextMap carrier) {
+	public void inject(SpanContext spanContext, TextMap carrier) {
 		Map<String, String> map = TextMapUtil.asMap(carrier);
 		if (spanContext == null) {
 			if (!isSampled(map, TraceMessageHeaders.SAMPLED_NAME)) {
@@ -42,7 +42,7 @@ public class HeaderBasedMessagingInjector implements MessagingSpanTextMapInjecto
 		return Span.SPAN_SAMPLED.equals(initialMessage.get(sampledHeaderName));
 	}
 
-	private void addHeaders(Span span, SpanTextMap textMap) {
+	private void addHeaders(Span span, TextMap textMap) {
 		addHeader(textMap, TraceMessageHeaders.TRACE_ID_NAME, span.traceIdString());
 		addHeader(textMap, TraceMessageHeaders.SPAN_ID_NAME, Span.idToHex(span.getSpanId()));
 		if (span.isExportable()) {
@@ -63,7 +63,7 @@ public class HeaderBasedMessagingInjector implements MessagingSpanTextMapInjecto
 		}
 	}
 
-	private void addAnnotations(TraceKeys traceKeys, SpanTextMap spanTextMap, Span span) {
+	private void addAnnotations(TraceKeys traceKeys, TextMap spanTextMap, Span span) {
 		Map<String, String> map = TextMapUtil.asMap(spanTextMap);
 		for (String name : traceKeys.getMessage().getHeaders()) {
 			if (map.containsKey(name)) {
@@ -94,7 +94,7 @@ public class HeaderBasedMessagingInjector implements MessagingSpanTextMapInjecto
 		}
 	}
 
-	private void addHeader(SpanTextMap textMap, String name, String value) {
+	private void addHeader(TextMap textMap, String name, String value) {
 		if (StringUtils.hasText(value)) {
 			textMap.put(name, value);
 		}

@@ -34,7 +34,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.sleuth.Span;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -51,6 +50,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.GenericFilterBean;
 
 import io.opentracing.SpanContext;
+import io.opentracing.propagation.TextMap;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -118,7 +118,7 @@ public class TraceCustomFilterResponseInjectorTests {
 	static class CustomHttpServletResponseSpanInjector extends ZipkinHttpSpanInjector {
 
 		@Override
-		public void inject(SpanContext spanContext, SpanTextMap carrier) {
+		public void inject(SpanContext spanContext, TextMap carrier) {
 			Span span = (Span) spanContext;
 			super.inject(span, carrier);
 			carrier.put(Span.TRACE_ID_NAME, span.traceIdString());
@@ -144,7 +144,7 @@ public class TraceCustomFilterResponseInjectorTests {
 			filterChain.doFilter(request, response);
 		}
 
-		 class HttpServletResponseTextMap implements SpanTextMap {
+		 class HttpServletResponseTextMap implements TextMap {
 
 			 private final HttpServletResponse delegate;
 

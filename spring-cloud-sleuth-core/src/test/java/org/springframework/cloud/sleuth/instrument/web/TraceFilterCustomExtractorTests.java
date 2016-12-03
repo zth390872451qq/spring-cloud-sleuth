@@ -31,7 +31,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.sleuth.Sampler;
 import org.springframework.cloud.sleuth.Span;
 import org.springframework.cloud.sleuth.SpanReporter;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.cloud.sleuth.sampler.AlwaysSampler;
 import org.springframework.cloud.sleuth.util.ArrayListSpanAccumulator;
@@ -50,6 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import io.opentracing.SpanContext;
+import io.opentracing.propagation.TextMap;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -141,7 +141,7 @@ public class TraceFilterCustomExtractorTests {
 	// tag::extractor[]
 	static class CustomHttpSpanExtractor implements HttpSpanExtractor {
 
-		@Override public Span joinTrace(SpanTextMap carrier) {
+		@Override public Span joinTrace(TextMap carrier) {
 			Map<String, String> map = TextMapUtil.asMap(carrier);
 			long traceId = Span.hexToId(map.get("correlationid"));
 			long spanId = Span.hexToId(map.get("myspanid"));
@@ -155,7 +155,7 @@ public class TraceFilterCustomExtractorTests {
 	static class CustomHttpSpanInjector implements HttpSpanInjector {
 
 		@Override
-		public void inject(SpanContext spanContext, SpanTextMap carrier) {
+		public void inject(SpanContext spanContext, TextMap carrier) {
 			Span span = (Span) spanContext;
 			carrier.put("correlationId", span.traceIdString());
 			carrier.put("mySpanId", Span.idToHex(span.getSpanId()));

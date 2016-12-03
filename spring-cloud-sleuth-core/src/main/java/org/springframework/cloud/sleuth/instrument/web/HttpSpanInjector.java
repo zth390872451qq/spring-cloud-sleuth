@@ -1,14 +1,16 @@
 package org.springframework.cloud.sleuth.instrument.web;
 
 import org.springframework.cloud.sleuth.SpanInjector;
-import org.springframework.cloud.sleuth.SpanTextMap;
+
+import io.opentracing.propagation.TextMap;
 
 /**
- * Contract for injecting tracing headers from a {@link SpanTextMap}
+ * Contract for injecting tracing headers from a {@link TextMap}
  * via HTTP headers
  *
  * @author Marcin Grzejszczak
  * @since 1.2.0
  */
-public interface HttpSpanInjector extends SpanInjector<SpanTextMap> {
+// TODO: Breaking change - SpanTextMap -> TextMap
+public interface HttpSpanInjector extends SpanInjector<TextMap> {
 }

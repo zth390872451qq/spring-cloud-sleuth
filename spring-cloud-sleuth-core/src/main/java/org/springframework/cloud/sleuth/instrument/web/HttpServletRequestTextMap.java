@@ -16,22 +16,23 @@
 
 package org.springframework.cloud.sleuth.instrument.web;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.web.util.UrlPathHelper;
 
+import io.opentracing.propagation.TextMap;
+
 /**
- * A {@link SpanTextMap} abstraction over {@link HttpServletRequest}
+ * A {@link TextMap} abstraction over {@link HttpServletRequest}
  *
  * @author Marcin Grzejszczak
  * @since 1.2.0
  */
-class HttpServletRequestTextMap implements SpanTextMap {
+class HttpServletRequestTextMap implements TextMap {
 
 	private final HttpServletRequest delegate;
 	private final Map<String, String> additionalHeaders = new HashMap<>();

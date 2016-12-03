@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Utility class related to {@link org.springframework.cloud.sleuth.SpanTextMap}
+ * Utility class related to {@link io.opentracing.propagation.TextMap}
  *
  * @author Marcin Grzejszczak
  * @since 1.2.0

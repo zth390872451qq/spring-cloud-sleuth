@@ -3,8 +3,9 @@ package org.springframework.cloud.sleuth.instrument.messaging;
 import java.util.Map;
 
 import org.springframework.cloud.sleuth.Span;
-import org.springframework.cloud.sleuth.SpanTextMap;
 import org.springframework.cloud.sleuth.util.TextMapUtil;
+
+import io.opentracing.propagation.TextMap;
 
 /**
  * Default implementation for messaging
@@ -15,7 +16,11 @@ import org.springframework.cloud.sleuth.util.TextMapUtil;
 public class HeaderBasedMessagingExtractor implements MessagingSpanTextMapExtractor {
 
 	@Override
-	public Span joinTrace(SpanTextMap textMap) {
+	public Span joinTrace(TextMap textMap) {
+		// TODO: OpenTracing... doesn't make sense to process every type
+		if (!(textMap instanceof MessagingTextMap)) {
+			return null;
+		}
 		Map<String, String> carrier = TextMapUtil.asMap(textMap);
 		if (!hasHeader(carrier, TraceMessageHeaders.SPAN_ID_NAME)
 				|| !hasHeader(carrier, TraceMessageHeaders.TRACE_ID_NAME)) {

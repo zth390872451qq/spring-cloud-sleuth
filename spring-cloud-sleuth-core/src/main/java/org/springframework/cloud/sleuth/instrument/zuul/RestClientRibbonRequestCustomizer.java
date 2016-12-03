@@ -19,10 +19,11 @@ package org.springframework.cloud.sleuth.instrument.zuul;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.springframework.cloud.sleuth.Tracer;
+
 import com.netflix.client.http.HttpRequest;
 
-import org.springframework.cloud.sleuth.SpanTextMap;
-import org.springframework.cloud.sleuth.Tracer;
+import io.opentracing.propagation.TextMap;
 
 /**
  * Customization of a Ribbon request for Netflix HttpClient
@@ -42,9 +43,9 @@ class RestClientRibbonRequestCustomizer extends SpanInjectingRibbonRequestCustom
 	}
 
 	@Override
-	protected SpanTextMap toSpanTextMap(final HttpRequest.Builder context) {
+	protected TextMap toSpanTextMap(final HttpRequest.Builder context) {
 		context.build().getHttpHeaders();
-		return new SpanTextMap() {
+		return new TextMap() {
 			@Override public Iterator<Map.Entry<String, String>> iterator() {
 				return context.build().getHttpHeaders().getAllHeaders().iterator();
 			}

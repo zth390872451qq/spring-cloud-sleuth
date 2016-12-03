@@ -21,15 +21,15 @@ import java.util.Map;
 
 import com.netflix.zuul.context.RequestContext;
 
-import org.springframework.cloud.sleuth.SpanTextMap;
+import io.opentracing.propagation.TextMap;
 
 /**
- * A {@link SpanTextMap} abstraction over {@link RequestContext}
+ * A {@link TextMap} abstraction over {@link RequestContext}
  *
  * @author Marcin Grzejszczak
  * @since 1.2.0
  */
-class RequestContextTextMap implements SpanTextMap {
+class RequestContextTextMap implements TextMap {
 
 	private final RequestContext carrier;
 
