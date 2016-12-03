@@ -58,6 +58,29 @@ public class TraceAutoConfigurationTest {
   }
 
   @Test
+  public void defaultsTo64BitTraceIdWithOpenTracing() {
+    context = new AnnotationConfigApplicationContext();
+    context.register(
+        PropertyPlaceholderAutoConfiguration.class,
+        SleuthLogAutoConfiguration.class,
+        TraceAutoConfiguration.class
+    );
+    context.refresh();
+    io.opentracing.Tracer tracer = context.getBean(Tracer.class);
+
+    io.opentracing.Span span = null;
+    try {
+      span = tracer.buildSpan("foo").start();
+      assertThat(((Span) span).getTraceIdHigh()).isEqualTo(0L);
+      assertThat(((Span) span).getTraceId()).isNotEqualTo(0L);
+    } finally {
+      if (span != null){
+        span.close();
+      }
+    }
+  }
+
+  @Test
   public void optInto128BitTraceId() {
     addEnvironment(context, "spring.sleuth.traceId128:true");
     context.register(
@@ -76,6 +99,29 @@ public class TraceAutoConfigurationTest {
     } finally {
       if (span != null){
         tracer.close(span);
+      }
+    }
+  }
+
+  @Test
+  public void optInto128BitTraceIdWithOpenTracing() {
+    addEnvironment(context, "spring.sleuth.traceId128:true");
+    context.register(
+            PropertyPlaceholderAutoConfiguration.class,
+            SleuthLogAutoConfiguration.class,
+            TraceAutoConfiguration.class
+    );
+    context.refresh();
+    io.opentracing.Tracer tracer = context.getBean(io.opentracing.Tracer.class);
+
+    io.opentracing.Span span = null;
+    try {
+      span = tracer.buildSpan("foo").start();
+      assertThat(((Span) span).getTraceIdHigh()).isNotEqualTo(0L);
+      assertThat(((Span) span).getTraceId()).isNotEqualTo(0L);
+    } finally {
+      if (span != null){
+        span.close();
       }
     }
   }

@@ -32,6 +32,7 @@ import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.cloud.sleuth.log.SpanLogger;
 import org.springframework.cloud.sleuth.sampler.NeverSampler;
 import org.springframework.cloud.sleuth.trace.DefaultTracer;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -66,9 +67,9 @@ public class TraceAutoConfiguration {
 	@ConditionalOnMissingBean(Tracer.class)
 	public DefaultTracer sleuthTracer(Sampler sampler, Random random,
 			SpanNamer spanNamer, SpanLogger spanLogger,
-			SpanReporter spanReporter) {
+			SpanReporter spanReporter, ApplicationContext applicationContext) {
 		return new DefaultTracer(sampler, random, spanNamer, spanLogger,
-				spanReporter, this.properties.isTraceId128());
+				spanReporter, this.properties.isTraceId128(), applicationContext);
 	}
 
 	@Bean

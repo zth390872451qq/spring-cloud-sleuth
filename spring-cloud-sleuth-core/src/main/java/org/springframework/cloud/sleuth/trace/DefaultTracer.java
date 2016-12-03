@@ -115,6 +115,23 @@ public class DefaultTracer implements Tracer {
 	}
 
 	@Override
+	public Span createSpan(Span span) {
+		if (isTracing()) {
+			span = createChild(getCurrentSpan(), span);
+		}
+		else {
+			long id = createId();
+			span = Span.builder(span)
+					.traceIdHigh(this.traceId128 ? createId() : 0L)
+					.traceId(id)
+					.spanId(id).build();
+			span = sampledSpan(span, this.defaultSampler);
+			this.spanLogger.logStartedSpan(null, span);
+		}
+		return continueSpan(span);
+	}
+
+	@Override
 	public Span createSpan(String name, Sampler sampler) {
 		Span span;
 		if (isTracing()) {
@@ -212,16 +229,44 @@ public class DefaultTracer implements Tracer {
 		}
 	}
 
+	Span createChild(Span parent, Span child) {
+		long id = createId();
+		if (parent == null) {
+			Span span = Span.builder(child)
+					.traceIdHigh(this.traceId128 ? createId() : 0L)
+					.traceId(id)
+					.spanId(id).build();
+			span = sampledSpan(span, this.defaultSampler);
+			this.spanLogger.logStartedSpan(null, span);
+			return span;
+		}
+		else {
+			if (!isTracing()) {
+				SpanContextHolder.push(parent, true);
+			}
+			Span span = Span.builder(child)
+					.traceIdHigh(parent.getTraceIdHigh())
+					.traceId(parent.getTraceId()).parent(parent.getSpanId()).spanId(id)
+					.processId(parent.getProcessId()).savedSpan(parent)
+					.exportable(parent.isExportable())
+					.baggage(parent.getBaggage())
+					.build();
+			this.spanLogger.logStartedSpan(parent, span);
+			return span;
+		}
+	}
+
 	private Span sampledSpan(Span span, Sampler sampler) {
 		if (!sampler.isSampled(span)) {
 			// Copy everything, except set exportable to false
-			return Span.builder()
+			return Span.builder(span)
 					.begin(span.getBegin())
 					.traceIdHigh(span.getTraceIdHigh())
 					.traceId(span.getTraceId())
 					.spanId(span.getSpanId())
 					.name(span.getName())
-					.exportable(false).build();
+					.exportable(false)
+					.build();
 		}
 		return span;
 	}
@@ -295,7 +340,7 @@ public class DefaultTracer implements Tracer {
 
 	@Override
 	public SpanBuilder buildSpan(String operationName) {
-		return Span.builder().name(operationName);
+		return Span.builder().applicationContext(this.applicationContext).name(operationName);
 	}
 
 	/**
@@ -304,7 +349,6 @@ public class DefaultTracer implements Tracer {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <C> void inject(SpanContext spanContext, Format<C> format, C carrier) {
-		// TODO: Fix this
 		if (this.applicationContext != null) {
 			Map<String, SpanInjector> injectors = injectors();
 			for (SpanInjector injector : injectors.values()) {
@@ -323,12 +367,10 @@ public class DefaultTracer implements Tracer {
 	}
 
 	private Map<String, SpanInjector> injectors() {
-		synchronized (this.injectors) {
-			if (this.injectors.isEmpty()) {
-				this.injectors.putAll(this.applicationContext.getBeansOfType(SpanInjector.class));
-			}
-			return this.injectors;
+		if (this.injectors.isEmpty()) {
+			this.injectors.putAll(this.applicationContext.getBeansOfType(SpanInjector.class));
 		}
+		return this.injectors;
 	}
 
 	/**
@@ -337,7 +379,6 @@ public class DefaultTracer implements Tracer {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <C> SpanContext extract(Format<C> format, C carrier) {
-		// TODO: Fix this
 		if (this.applicationContext != null) {
 			Map<String, SpanExtractor> extractors = extractors();
 			for (SpanExtractor extractor : extractors.values()) {
@@ -356,11 +397,9 @@ public class DefaultTracer implements Tracer {
 	}
 
 	private Map<String, SpanExtractor> extractors() {
-		synchronized (this.extractors) {
-			if (this.extractors.isEmpty()) {
-				this.extractors.putAll(this.applicationContext.getBeansOfType(SpanExtractor.class));
-			}
-			return this.extractors;
+		if (this.extractors.isEmpty()) {
+			this.extractors.putAll(this.applicationContext.getBeansOfType(SpanExtractor.class));
 		}
+		return this.extractors;
 	}
 }

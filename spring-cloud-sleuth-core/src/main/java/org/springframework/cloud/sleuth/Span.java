@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -157,7 +158,8 @@ public class Span implements SpanContext, io.opentracing.Span {
 	private final Map<String,String> baggage;
 	@JsonIgnore
 	private List<Reference> references = new ArrayList<>();
-
+	@JsonIgnore
+	private ApplicationContext applicationContext;
 
 	// Null means we don't know the start tick, so fallback to time
 	@JsonIgnore
@@ -192,6 +194,7 @@ public class Span implements SpanContext, io.opentracing.Span {
 		this.baggage = current.baggage;
 		this.savedSpan = savedSpan;
 		this.references = current.references;
+		this.applicationContext = current.applicationContext;
 	}
 
 	/**
@@ -252,10 +255,15 @@ public class Span implements SpanContext, io.opentracing.Span {
 		this.baggage = new ConcurrentHashMap<>();
 		this.baggage.putAll(builder.baggage);
 		this.references.addAll(builder.references);
+		this.applicationContext = builder.applicationContext;
 	}
 
 	public static SpanBuilder builder() {
 		return new SpanBuilder();
+	}
+
+	public static SpanBuilder builder(Span prototype) {
+		return new SpanBuilder(prototype);
 	}
 
 	/**
@@ -362,7 +370,14 @@ public class Span implements SpanContext, io.opentracing.Span {
 	}
 
 	@Override public void close() {
-		finish();
+		if (this.applicationContext != null) {
+			org.springframework.cloud.sleuth.Tracer tracer = this.applicationContext
+					.getBean(org.springframework.cloud.sleuth.Tracer.class);
+			tracer.close(this);
+		} else {
+			// TODO: DO sth more intelligent?
+			throw new IllegalStateException("Span was created without context. It's impossible to close it");
+		}
 	}
 
 	@Override public io.opentracing.Span setTag(String key, String value) {
@@ -723,7 +738,7 @@ public class Span implements SpanContext, io.opentracing.Span {
 		private Map<String, String> tags = new LinkedHashMap<>();
 		private Map<String, String> baggage = new LinkedHashMap<>();
 		private List<Reference> references = new ArrayList<>();
-
+		private ApplicationContext applicationContext;
 
 		SpanBuilder() {
 		}
@@ -744,6 +759,7 @@ public class Span implements SpanContext, io.opentracing.Span {
 			this.tags = span.tags;
 			this.baggage = span.baggage;
 			this.references = span.references;
+			this.applicationContext = span.applicationContext;
 		}
 
 		/**
@@ -848,6 +864,11 @@ public class Span implements SpanContext, io.opentracing.Span {
 			return this;
 		}
 
+		public Span.SpanBuilder applicationContext(ApplicationContext context) {
+			this.applicationContext = context;
+			return this;
+		}
+
 		public Span build() {
 			return new Span(this);
 		}
@@ -897,7 +918,10 @@ public class Span implements SpanContext, io.opentracing.Span {
 		}
 
 		@Override public io.opentracing.Span start() {
-			return build();
+			org.springframework.cloud.sleuth.Tracer tracer = this.applicationContext
+					.getBean(org.springframework.cloud.sleuth.Tracer.class);
+			Span span = build();
+			return tracer.createSpan(span);
 		}
 
 		@Override public Iterable<Map.Entry<String, String>> baggageItems() {

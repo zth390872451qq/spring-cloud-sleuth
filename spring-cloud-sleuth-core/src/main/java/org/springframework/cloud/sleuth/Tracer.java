@@ -66,6 +66,17 @@ public interface Tracer extends SpanAccessor, io.opentracing.Tracer {
 	Span createSpan(String name);
 
 	/**
+	 * Creates a new Span from the given {@link Span} object.
+	 * <p/>
+	 * If this thread has a currently active span, it will be the parent of the span we
+	 * create here. If there is no currently active trace span, the trace scope we
+	 * create will be empty.
+	 *
+	 * @param span the span which will be placed in the current context
+	 */
+	Span createSpan(Span span);
+
+	/**
 	 * Creates a new Span with a specific parent. The parent might be in another
 	 * process or thread.
 	 * <p/>
