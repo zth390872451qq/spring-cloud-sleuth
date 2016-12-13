@@ -130,6 +130,7 @@ public class TraceHandlerInterceptor extends HandlerInterceptorAdapter {
 		}
 		getTracer().close(spanFromRequest);
 		getTracer().detach(rootSpanFromRequest);
+		setSpanInAsyncAttribute(request, rootSpanFromRequest);
 	}
 
 	@Override
@@ -155,6 +156,7 @@ public class TraceHandlerInterceptor extends HandlerInterceptorAdapter {
 			getTracer().addTag(Span.SPAN_ERROR_TAG_NAME, ExceptionUtils.getExceptionMessage(ex));
 		}
 		getTracer().close(span);
+		clearAttributes(request);
 	}
 
 	private boolean isSpanContinued(HttpServletRequest request) {
@@ -165,12 +167,21 @@ public class TraceHandlerInterceptor extends HandlerInterceptorAdapter {
 		return (Span) request.getAttribute(TraceRequestAttributes.HANDLED_SPAN_REQUEST_ATTR);
 	}
 
+	private void clearAttributes(HttpServletRequest request) {
+		request.removeAttribute(TraceRequestAttributes.HANDLED_SPAN_REQUEST_ATTR);
+		request.removeAttribute(TraceRequestAttributes.SPAN_CONTINUED_REQUEST_ATTR);
+	}
+
 	private Span getRootSpanFromAttribute(HttpServletRequest request) {
 		return (Span) request.getAttribute(TraceFilter.TRACE_REQUEST_ATTR);
 	}
 
 	private void setSpanInAttribute(HttpServletRequest request, Span span) {
 		request.setAttribute(TraceRequestAttributes.HANDLED_SPAN_REQUEST_ATTR, span);
+	}
+
+	private void setSpanInAsyncAttribute(HttpServletRequest request, Span span) {
+		request.setAttribute(TraceRequestAttributes.ASYNC_HANDLED_SPAN_REQUEST_ATTR, span);
 	}
 
 	private Tracer getTracer() {

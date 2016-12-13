@@ -32,6 +32,14 @@ public final class TraceRequestAttributes {
 			+ ".TRACE_HANDLED";
 
 	/**
+	 * Attribute containing a {@link org.springframework.cloud.sleuth.Span} set on a request when it got handled by a Sleuth component.
+	 * If that attribute is set then {@link TraceFilter} will close this span upon completion of async
+	 * processing.
+	 */
+	public static final String ASYNC_HANDLED_SPAN_REQUEST_ATTR = TraceRequestAttributes.class.getName()
+			+ ".ASYNC_TRACE_HANDLED";
+
+	/**
 	 * Attribute set when the {@link org.springframework.cloud.sleuth.Span} got continued in the {@link TraceFilter}.
 	 * The Sleuth tracing components will most likely continue the current Span instead of creating a new one.
 	 */

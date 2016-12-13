@@ -151,8 +151,17 @@ public class TraceFilter extends GenericFilterBean {
 				// TODO: how to deal with response annotations and async?
 				return;
 			}
+			// we want the handlers to close spans but only when we don't have an async processing
+			Span asyncHandler = asyncSpanFromHandler(request);
+			if (spanFromHandler(request) != null && asyncHandler == null) {
+				request.removeAttribute(TraceRequestAttributes.SPAN_CONTINUED_REQUEST_ATTR);
+				return;
+			}
 			spanFromRequest = createSpanIfRequestNotHandled(request, spanFromRequest, name, skip);
 			detachOrCloseSpans(request, response, spanFromRequest, exception);
+			if (asyncHandler != null) {
+				request.removeAttribute(TraceRequestAttributes.ASYNC_HANDLED_SPAN_REQUEST_ATTR);
+			}
 		}
 	}
 
@@ -196,7 +205,7 @@ public class TraceFilter extends GenericFilterBean {
 	}
 
 	private boolean requestHasAlreadyBeenHandled(HttpServletRequest request) {
-		return request.getAttribute(TraceRequestAttributes.HANDLED_SPAN_REQUEST_ATTR) != null;
+		return spanFromHandler(request) != null;
 	}
 
 	private void detachOrCloseSpans(HttpServletRequest request,
@@ -255,7 +264,19 @@ public class TraceFilter extends GenericFilterBean {
 	}
 
 	private Span getSpanFromAttribute(HttpServletRequest request) {
+		Span spanFromHandler = spanFromHandler(request);
+		if (spanFromHandler != null) {
+			return spanFromHandler;
+		}
 		return (Span) request.getAttribute(TRACE_REQUEST_ATTR);
+	}
+
+	private Span spanFromHandler(HttpServletRequest request) {
+		return (Span) request.getAttribute(TraceRequestAttributes.HANDLED_SPAN_REQUEST_ATTR);
+	}
+
+	private Span asyncSpanFromHandler(HttpServletRequest request) {
+		return (Span) request.getAttribute(TraceRequestAttributes.ASYNC_HANDLED_SPAN_REQUEST_ATTR);
 	}
 
 	private boolean errorAlreadyHandled(HttpServletRequest request) {
