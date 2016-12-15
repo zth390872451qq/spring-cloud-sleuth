@@ -221,7 +221,7 @@ public class TraceFilter extends GenericFilterBean {
 					log.debug(
 							"Won't detach the span " + span + " since error has already been handled");
 				}
-			} else {
+			} else if (this.tracer.isTracing() && this.tracer.getCurrentSpan().equals(span)) {
 				if (log.isDebugEnabled()) {
 					log.debug("Detaching the span " + span + " since the response was unsuccessful");
 				}
